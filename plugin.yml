@@ -1,0 +1,9 @@
+name: AStarTest
+main: k0si\astartest\AStarTest
+version: 1.0.0
+api: [4.0.0]
+
+load: STARTUP
+author: k0si
+description: A* Pathfinding
+commands: []
