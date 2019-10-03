@@ -58,7 +58,6 @@ class AStar {
                 $update = false;
                 if ($newNode === null) {
                     $newNode = new Node($curNode, $neighbor);
-                    $this->openNodeIdentifier[$this->helper->hash($neighbor)] = $newNode;
                 } else {
                     if ($newNode->g < $newG) {
                         continue;
@@ -73,6 +72,7 @@ class AStar {
                 if (!$update) {
                     $this->openNode[] = $newNode;
                 }
+                $this->openNodeIdentifier[$this->helper->hash($neighbor)] = $newNode;
             }
         }
         return [];

@@ -33,6 +33,22 @@ class AStarTest extends PluginBase implements Listener, Helper {
     /** @var bool */
     private $setMode = false;
 
+    /** @var Vector3[] */
+    private $lastPath = [];
+
+    /** @var int[] */
+    private $cantJumpBlocks = [
+        ItemIds::FENCE,
+        ItemIds::FENCE_GATE,
+        ItemIds::OAK_FENCE_GATE,
+        ItemIds::NETHER_BRICK_FENCE,
+        ItemIds::SPRUCE_FENCE_GATE,
+        ItemIds::BIRCH_FENCE_GATE,
+        ItemIds::JUNGLE_FENCE_GATE,
+        ItemIds::DARK_OAK_FENCE_GATE,
+        ItemIds::ACACIA_FENCE_GATE
+    ];
+
     public function onLoad(): void {}
 
     public function onEnable(): void {
@@ -84,8 +100,11 @@ class AStarTest extends PluginBase implements Listener, Helper {
                 $block->getPos()->getWorld()->setBlock($this->endPos, $torch);
                 $ev->getPlayer()->sendMessage("끝 설정됨: ". $this->endPos);
             } else {
-                $block->getPos()->getWorld()->setBlock($this->startPos, BlockFactory::get(ItemIds::AIR));
-                $block->getPos()->getWorld()->setBlock($this->endPos, BlockFactory::get(ItemIds::AIR));
+                foreach ($this->lastPath as $value) {
+                    if ($value instanceof Vector3) {
+                        $this->startPos->getWorld()->setBlock($value, BlockFactory::get(ItemIds::AIR));
+                    }
+                }
 
                 $this->startPos = null;
                 $this->endPos = null;
@@ -105,6 +124,7 @@ class AStarTest extends PluginBase implements Listener, Helper {
                 $this->startPos->getWorld()->setBlock($value, BlockFactory::get(ItemIds::PLANKS));
             }
         }
+        $this->lastPath = $result;
         $this->started = false;
     }
 
@@ -118,16 +138,58 @@ class AStarTest extends PluginBase implements Listener, Helper {
 
     public function getNeighbor(object $data): array {
         if ($data instanceof Vector3) {
+            $directions = [ [-1, 0], [1, 0], [0, -1], [0, 1] ];
             $positions = [];
-            for ($xi = $data->x - 1; $xi <= $data->x + 1; $xi++) {
-                for ($zi = $data->z - 1; $zi <= $data->z + 1; $zi++) {
-                    if ($xi === $data->x && $zi === $data->z) continue;
 
-                    $pos = new Vector3($xi, $this->startPos->y, $zi);
-                    $block = $this->startPos->getWorld()->getBlock($pos);
-                    if ($block->getId() === ItemIds::AIR || $block->getId() === ItemIds::UNLIT_REDSTONE_TORCH) {
-                        $positions[] = $pos;
+            /**
+             * T: overhead
+             * H: head
+             * F: feet (cur position)
+             * 
+             * --123
+             * TA
+             * HB
+             * FC
+             * -D
+             * -E
+             */
+
+            foreach ($directions as $direction) {
+                $x = $direction[0];
+                $z = $direction[1];
+
+                $posB = $data->add($x, 1, $z);
+                $blockB = $this->startPos->getWorld()->getBlock($posB);
+                if ($blockB->isSolid()) {
+                    continue;
+                }
+
+                $posC = $data->add($x, 0, $z);
+                $blockC = $this->startPos->getWorld()->getBlock($posC);
+                if ($blockC->isSolid()) {
+                    if (in_array($blockC->getId(), $this->cantJumpBlocks)) {
+                        continue;
                     }
+                    $posA = $data->add($x, 2, $z);
+                    $blockA = $this->startPos->getWorld()->getBlock($posA);
+                    if ($blockA->isSolid()) {
+                        continue;
+                    }
+                    $positions[] = $posB;
+                    continue;
+                }
+
+                $posD = $data->add($x, -1, $z);
+                $blockD = $this->startPos->getWorld()->getBlock($posD);
+                if ($blockD->isSolid()) {
+                    $positions[] = $posC;
+                    continue;
+                }
+
+                $posE = $data->add($x, -2, $z);
+                $blockE = $this->startPos->getWorld()->getBlock($posE);
+                if ($blockE->isSolid()) {
+                    $positions[] = $posD;
                 }
             }
             return $positions;
@@ -151,7 +213,7 @@ class AStarTest extends PluginBase implements Listener, Helper {
 
     public function isEnd(object $data): bool {
         if ($data instanceof Vector3) {
-            return $data->x === $this->endPos->x && $data->z === $this->endPos->z;
+            return $data->x === $this->endPos->x && $data->y === $this->endPos->y && $data->z === $this->endPos->z;
         }
         return false;
     }
