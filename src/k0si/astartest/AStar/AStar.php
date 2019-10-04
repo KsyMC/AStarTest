@@ -30,6 +30,10 @@ class AStar {
      * @return int[] datas
      */
     public function find(object $startData): array {
+        $this->closeList = [];
+        $this->openList = [];
+        $this->openNodeIdentifier = [];
+
         $startNode = new Node(null, $startData);
 
         $this->openNode[] = $startNode;
@@ -37,7 +41,7 @@ class AStar {
 
         $startTime = time();
         while(!empty($this->openNode)) {
-            if (time() - $startTime > 5) break;
+            if (time() - $startTime > 1) break;
             usort($this->openNode, array($this, 'fsort'));
 
             $curNode = array_shift($this->openNode);
