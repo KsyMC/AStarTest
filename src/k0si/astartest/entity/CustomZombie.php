@@ -6,7 +6,7 @@ namespace k0si\astartest\entity;
 
 use pocketmine\network\mcpe\protocol\types\entity\EntityLegacyIds;
 
-class CustomZombie extends CustomLiving {
+class CustomZombie extends PathFindingLiving {
     
     const NETWORK_ID = EntityLegacyIds::ZOMBIE;
 

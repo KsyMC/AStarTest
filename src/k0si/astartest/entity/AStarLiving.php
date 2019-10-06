@@ -12,8 +12,9 @@ use pocketmine\math\Vector3;
 use pocketmine\block\BlockFactory;
 use k0si\astartest\AStar\Helper;
 use k0si\astartest\AStar\AStar;
+use k0si\astartest\pathfinding\PathNavigate;
 
-abstract class CustomLiving extends Living implements Helper {
+abstract class AStarLiving extends Living implements Helper {
 
     /** @var AStar */
     protected $pathFinder = null;
